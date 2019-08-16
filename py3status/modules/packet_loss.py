@@ -5,14 +5,12 @@ Keep track of packet loss over a period of time.
 Counts lost packets during last one-, five-, and fifteen-minute periods.
 
 Requires:
-    ping3 # https://github.com/kyan001/ping3 | to install - "pip install ping3"
 
 Notes:
     https://stackoverflow.com/questions/2953462/pinging-servers-in-python
 """
 
 
-import ping3
 
 
 class Py3status:
@@ -55,6 +53,7 @@ class Py3status:
 
     def packet_loss(self):
         host = "google.com"
+
 
         for x in self.thresholds_init:
             if x in self.load_data:
