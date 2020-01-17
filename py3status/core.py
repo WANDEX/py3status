@@ -503,7 +503,7 @@ class Py3statusWrapper:
         modules_list: ['weather_yahoo paris', 'pewpew', 'net_rate']
         user_modules: {
             'weather_yahoo': ('/etc/py3status.d/', 'weather_yahoo.py'),
-            'pewpew': (entry_point', <Py3Status class>),
+            'pewpew': ('entry_point', <Py3Status class>),
         }
         """
         for module in modules_list:
@@ -642,7 +642,7 @@ class Py3statusWrapper:
         # initialize the udev monitor (lazy)
         self.udev_monitor = UdevMonitor(self)
 
-        # suppress modules' ouput wrt issue #20
+        # suppress modules' output wrt issue #20
         if not self.config["debug"]:
             sys.stdout = open("/dev/null", "w")
             sys.stderr = open("/dev/null", "w")
@@ -870,7 +870,7 @@ class Py3statusWrapper:
             # Binary mode so fs encoding setting is not an issue
             with open(self.config["log_file"], "ab") as f:
                 log_time = time.strftime("%Y-%m-%d %H:%M:%S")
-                # nice formating of data structures using pretty print
+                # nice formatting of data structures using pretty print
                 if isinstance(msg, (dict, list, set, tuple)):
                     msg = pformat(msg)
                     # if multiline then start the data output on a fresh line

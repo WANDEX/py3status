@@ -1027,6 +1027,7 @@ class Py3:
             )
         except Exception as e:
             msg = "Command `{cmd}` {error}".format(cmd=pretty_cmd, error=e)
+            self.log(msg)
             raise exceptions.CommandError(msg, error_code=e.errno)
 
         output, error = process.communicate()
@@ -1254,6 +1255,8 @@ class Py3:
         timeout=None,
         auth=None,
         cookiejar=None,
+        retry_times=None,
+        retry_wait=None,
     ):
         """
         Make a request to a url and retrieve the results.
@@ -1270,6 +1273,8 @@ class Py3:
         :param timeout: timeout for the request in seconds
         :param auth: authentication info as tuple `(username, password)`
         :param cookiejar: an object of a CookieJar subclass
+        :param retry_times: how many times to retry the request
+        :param retry_wait: how long to wait between retries in seconds
 
         :returns: HttpResponse
         """
@@ -1289,15 +1294,36 @@ class Py3:
         if timeout is None:
             timeout = getattr(self._py3status_module, "request_timeout", 10)
 
+        if retry_times is None:
+            retry_times = getattr(self._py3status_module, "request_retry_times", 3)
+
+        if retry_wait is None:
+            retry_wait = getattr(self._py3status_module, "request_retry_wait", 2)
+
         if "User-Agent" not in headers:
             headers["User-Agent"] = "py3status/{} {}".format(version, self._uid)
 
-        return HttpResponse(
-            url,
-            params=params,
-            data=data,
-            headers=headers,
-            timeout=timeout,
-            auth=auth,
-            cookiejar=cookiejar,
-        )
+        def get_http_response():
+            return HttpResponse(
+                url,
+                params=params,
+                data=data,
+                headers=headers,
+                timeout=timeout,
+                auth=auth,
+                cookiejar=cookiejar,
+            )
+
+        for n in range(1, retry_times):
+            try:
+                return get_http_response()
+            except (self.RequestTimeout, self.RequestURLError):
+                if self.is_gevent():
+                    from gevent import sleep
+                else:
+                    from time import sleep
+                self.log("HTTP request retry {}/{}".format(n, retry_times))
+                sleep(retry_wait)
+        self.log("HTTP request retry {}/{}".format(retry_times, retry_times))
+        sleep(retry_wait)
+        return get_http_response()

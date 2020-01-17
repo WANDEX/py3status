@@ -37,6 +37,7 @@ Format placeholders:
     {state} playback status of the player
     {time} played time of the song
     {title} name of the song
+    {nowplaying} now playing field provided by VLC for stream info
 
 Button placeholders:
     {next} play the next title
@@ -197,6 +198,7 @@ class Py3status:
             "player": None,
             "state": STOPPED,
             "title": None,
+            "nowplaying": None,
         }
 
         if self._player is None:
@@ -277,6 +279,7 @@ class Py3status:
             "length": self._data.get("length"),
             "time": ptime,
             "title": self._data.get("title") or "No Track",
+            "nowplaying": self._data.get("nowplaying"),
             "full_name": self._player_details.get("full_name"),  # for debugging ;p
         }
 
@@ -328,7 +331,7 @@ class Py3status:
     def _set_player(self):
         """
         Sort the current players into priority order and set self._player
-        Players are ordered by working state then prefernce supplied by user
+        Players are ordered by working state, then by preference supplied by user
         and finally by instance if a player has more than one running.
         """
         players = []
@@ -371,7 +374,7 @@ class Py3status:
                 player = self._mpris_players[player_id]
 
                 # Note: Workaround. Since all players get noted if playback status
-                #       has been changed we have to check if we are the choosen one
+                #       has been changed we have to check if we are the chosen one
                 try:
                     dbus_status = player["_dbus_player"].PlaybackStatus
                 except GError:
@@ -394,7 +397,10 @@ class Py3status:
         if not player_id.startswith(SERVICE_BUS):
             return False
 
-        player = self._dbus.get(player_id, SERVICE_BUS_URL)
+        try:
+            player = self._dbus.get(player_id, SERVICE_BUS_URL)
+        except KeyError:
+            return False
 
         if player.Identity not in self._mpris_names:
             self._mpris_names[player.Identity] = player_id.split(".")[-1]
@@ -507,6 +513,8 @@ class Py3status:
             # delete the file extension
             self._data["title"] = re.sub(r"\....$", "", self._data.get("title"))
 
+            self._data["nowplaying"] = metadata.get("vlc:nowplaying")
+
     def kill(self):
         self._kill = True
 
@@ -553,7 +561,7 @@ class Py3status:
             "composite": composite,
         }
 
-        # we are outputing so reset tries
+        # we are outputting so reset tries
         self._tries = 0
         return response
 

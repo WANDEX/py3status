@@ -144,9 +144,9 @@ Store per config cache in different directories.
 
 You can specify the following options in module configuration.
 
-``min_length``: Specify a minimum length of characters for modules.
-``position``: Specify how modules should be positioned when the ``min_length``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+- ``min_length``: Specify a minimum length of characters for modules.
+- ``position``: Specify how modules should be positioned when the ``min_length``
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
 
@@ -163,7 +163,7 @@ You can specify the options in module or py3status configuration section.
 The following options will work on ``i3``.
 
 - ``align``: Specify how modules should be aligned when the ``min_width``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 - ``background``: Specify a background color for py3status modules.
 - ``markup``: Specify how modules should be parsed.
 - ``min_width``: Specify a minimum width of pixels for modules.
@@ -182,7 +182,7 @@ The following options will work on ``py3status``.
 
 - ``min_length``: Specify a minimum length of characters for modules.
 - ``position``: Specify how modules should be positioned when the ``min_length``
-is not reached. Either ``left`` (default), ``center``, or ``right``.
+  is not reached. Either ``left`` (default), ``center``, or ``right``.
 
 .. code-block:: py3status
 
@@ -244,8 +244,8 @@ container modules, e.g., frame and group.
 
 You can specify the options in module or py3status configuration section.
 
-``resources``: Specify a list of 3-tuples, e.g., ``[(option, resource, fallback)]``,
-to import resources.
+- ``resources``: Specify a list of 3-tuples, e.g., ``[(option, resource, fallback)]``,
+  to import resources.
 
 .. code-block:: py3status
 
@@ -921,7 +921,7 @@ Possible actions:
 
 - ``refresh``: immediately refresh the module and keep on updating it as usual
 - ``refresh_and_freeze``: module is ONLY refreshed when said udev subsystem emits
-an event
+  an event
 
 .. code-block:: py3status
     :caption: Example
@@ -937,8 +937,13 @@ an event
     by all package managers.
 
 
-Request Timeout
+Request Settings
 --------------------------------------------------------------
+
+Handling timeouts
+^^^^^^^^^^^^^^^^^
+
+Timeouts are handled thanks to the global ``request_timeout`` setting.
 
 .. note::
     New in version 3.16
@@ -953,4 +958,35 @@ module configuration. To find out if your module supports that, look for
     # stop waiting for a response after 10 seconds
     exchange_rate {
         request_timeout = 10
+    }
+
+
+Handling retries
+^^^^^^^^^^^^^^^^
+
+Retries are handled thanks to the global ``request_retry_times`` and
+``request_retry_wait`` settings.
+
+.. note::
+    New in version 3.21
+
+Requests failing due to network unavailability or remote server timeouts are
+retried automatically ``request_retry_times`` times (default ``3``) at a
+``request_retry_wait`` (default ``2``) seconds interval.
+
+This allows to be more graceful to i3 startup when network is not up yet or to
+short network disruptions and not display an error on the bar in that case.
+
+To find out if your module supports that, look for ``self.py3.request`` in the
+code.
+
+.. code-block:: py3status
+    :caption: Example
+
+    # try to contact the OWM API 10 times every 5 seconds before displaying
+    # an error on the bar for the module
+    # that is equivalent to 50 seconds of retrying before an error occurs
+    weather_owm {
+        request_retry_times = 10
+        request_retry_wait = 5
     }
