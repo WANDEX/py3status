@@ -70,23 +70,24 @@ class Py3status:
 
 
 
-    def calculate_packet_loss(self):
+    def _calculate_packet_loss(self):
         """Calculate packet_loss %."""
         received = self.statistics.get("received", 0)
         transmitted = self.statistics.get("transmitted", 0)
-        return round(100 - (received / transmitted * 100), 2)
+        if received > 0 and transmitted > 0:
+            return round(100 - (received / transmitted * 100), 2)
 
-    def update_statistics(self, key, get_packet_loss=GET_PACKET_LOSS):
+    def _update_statistics(self, key, get_packet_loss=GET_PACKET_LOSS):
         """Update ping statistics."""
         self.statistics["transmitted"] = self.statistics.get("transmitted", 0) + 1
         self.statistics[key] = self.statistics.get(key, 0) + 1
         if get_packet_loss:
             self.statistics["packet_loss"] = self.statistics.setdefault("packet_loss", 0)
-            self.statistics["packet_loss"] = self.calculate_packet_loss()
+            self.statistics["packet_loss"] = self._calculate_packet_loss()
         return self.statistics
 
-    def return_swith(self, returncode):
-        """Gets returncode from subping() and returns update_statistics().
+    def _return_swith(self, returncode):
+        """Gets returncode from _subping() and returns _update_statistics().
 
         Required parameter: returncode.
             returncode: "0" - success,
@@ -97,9 +98,9 @@ class Py3status:
                 1: "unreachable",
                 2: "unreachable",
         }
-        return self.update_statistics(switch.get(returncode, None))
+        return self._update_statistics(switch.get(returncode, None))
 
-    def reset_stats(self, dictionary):
+    def _reset_stats(self, dictionary):
         """Reset to 0 all dictionary values.
 
         Required parameter:
@@ -109,7 +110,7 @@ class Py3status:
             dictionary[key] = 0
         print("\nValues are now set to 0.\n{0}\n".format(dictionary.items()))
 
-    def count_iteration(self, counter, string=""):
+    def _count_iteration(self, counter, string=""):
         """Iteration counter for recursive functions and loops.
 
         Required parameter:
@@ -121,7 +122,7 @@ class Py3status:
         print("{0}:{1} iteration.".format(str(iteration), string))
         return iteration
 
-    def subping(self, host_or_ip=HOST, interval=INTERVAL, packetsize=PACKETSIZE):
+    def _subping(self, host_or_ip=HOST, interval=INTERVAL, packetsize=PACKETSIZE):
         """Calls system "ping" command as subprocess, and returns returncode.
 
         Optional parameters:
@@ -144,24 +145,24 @@ class Py3status:
             # to get returncode, but don't raise CalledProcessError()
             stdout, _ = ping.communicate()
             ping.poll()
-            return self.return_swith(ping.returncode)
+            return self._return_swith(ping.returncode)
         except subprocess.CalledProcessError:
             ping.kill()
             # suppress the original error, with "from None"
             raise RuntimeError("Something wrong here!") from None
 
-    def ping_loop(self):
-        """Infinite ping_loop."""
+    def _ping_loop(self):
+        """Infinite _ping_loop."""
         while True:
-            print(self.subping())
+            print(self._subping())
 
-    def time_loop(self, time_slice=TIME_SLICE):
-        """Infinite time_loop. Recursive function.
+    def _time_loop(self, time_slice=TIME_SLICE):
+        """Infinite _time_loop. Recursive function.
 
         Optional parameter:
             time_slice (int, last 't' minutes statistics storage)
         """
-        self.count_iteration(self.time_iteration, "time_loop()")
+        self._count_iteration(self.time_iteration, "_time_loop()")
         time_slice *= 60
         while time_slice:
             mins, secs = divmod(time_slice, 60)
@@ -170,20 +171,20 @@ class Py3status:
             sleep(1)
             time_slice -= 1
         print("Timer Has Ended.")
-        self.reset_stats(self.statistics)
-        self.time_loop()
+        self._reset_stats(self.statistics)
+        self._time_loop()
 
-    def make_threads(self):
+    def _make_threads(self):
         """Create and start two main threads."""
-        thread_ping = Thread(target=self.ping_loop, daemon=True)
-        thread_time = Thread(target=self.time_loop, daemon=True)
+        thread_ping = Thread(target=self._ping_loop, daemon=True)
+        thread_time = Thread(target=self._time_loop, daemon=True)
         thread_ping.start()
         thread_time.start()
         thread_ping.join()
         thread_time.join()
 
 
-# Packet_loss().make_threads()
+# Packet_loss()._make_threads()
 
 
 if __name__ == "__main__":
