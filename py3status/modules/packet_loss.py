@@ -22,6 +22,11 @@ class Py3status:
     """
 
     # available configuration parameters
+    cache_timeout = 1
+    format = "transmitted: {transmitted} received: {received} unreachable: {unreachable} "
+    # :TODO
+    # format_loss = "{transmitted}{received}{unreachable}"
+    # format_separator = ", "
     # defaults: Google Public DNS: 8.8.8.8 or 8.8.4.4
     HOST = "8.8.8.8"
     INTERVAL = 4
@@ -30,45 +35,30 @@ class Py3status:
     # TIME_SLICE = 12 * 60
     TIME_SLICE = 1
 
-    time_iteration = count()
-
-    statistics = {"transmitted": 0, "received": 0, "unreachable": 0}
-    cache_timeout = 5
-    format = (
-        "packet_loss [\?color=1avg {1min}] " "[\?color=5avg {5min}] [\?color=15avg {15min}]"
-    )
-    thresholds = [
-        (0, "#9dd7fb"),
-        (20, "good"),
-        (40, "degraded"),
-        (60, "#ffa500"),
-        (80, "bad"),
-    ]
-
-    class Meta:
-        update_config = {
-            "update_placeholder_format": [
-                {
-                    "placeholder_formats": {
-                        "1min": ":.2f",
-                        "5min": ":.2f",
-                        "15min": ":.2f",
-                        "1avg": ":.1f",
-                        "5avg": ":.1f",
-                        "15avg": ":.1f",
-                    },
-                    "format_strings": ["format"],
-                }
-            ]
-        }
-
     def post_config_hook(self):
-        self.load_data = {}
-        self.thresholds_init = self.py3.get_color_names_list(self.format)
+        self.statistics = {"transmitted": 0, "received": 0, "unreachable": 0}
+        self.time_iteration = count()
 
+    def packet_loss(self):
+        """One and only output method."""
+        # stat = {}
+        # for s in self.statistics.keys():
+            # stat[s] = s
+        stats = self.py3.time_in(self.cache_timeout)
+        response = {
+            "full_text": self.py3.safe_format(self.format, stats),
+            "cached_until": self.py3.time_in(self.cache_timeout),
+        }
+        self._make_threads()
 
+        # self.py3.safe_format(self.format_loss, {})
 
-
+        # format_separator = self.py3.safe_format(self.format_separator)
+        # format_loss = self.py3.composite_join(format_separator, self.statistics)
+        # response["full_text"] = self.py3.safe_format(
+            # self.format, {"format_loss": format_loss}
+        # )
+        return response
 
     def _calculate_packet_loss(self):
         """Calculate packet_loss %."""
@@ -108,7 +98,7 @@ class Py3status:
         """
         for key in dictionary.keys():
             dictionary[key] = 0
-        print("\nValues are now set to 0.\n{0}\n".format(dictionary.items()))
+        # print("\nValues are now set to 0.\n{0}\n".format(dictionary.items()))
 
     def _count_iteration(self, counter, string=""):
         """Iteration counter for recursive functions and loops.
@@ -119,7 +109,7 @@ class Py3status:
             string: (str, optional message after iteration number)
         """
         iteration = next(counter)
-        print("{0}:{1} iteration.".format(str(iteration), string))
+        # print("{0}:{1} iteration.".format(str(iteration), string))
         return iteration
 
     def _subping(self, host_or_ip=HOST, interval=INTERVAL, packetsize=PACKETSIZE):
@@ -154,7 +144,8 @@ class Py3status:
     def _ping_loop(self):
         """Infinite _ping_loop."""
         while True:
-            print(self._subping())
+            # print(self._subping())
+            self._subping()
 
     def _time_loop(self, time_slice=TIME_SLICE):
         """Infinite _time_loop. Recursive function.
@@ -167,10 +158,10 @@ class Py3status:
         while time_slice:
             mins, secs = divmod(time_slice, 60)
             timeformat = "{:02d}:{:02d}".format(mins, secs)
-            print(timeformat, end="\r")
+            # print(timeformat, end="\r")
             sleep(1)
             time_slice -= 1
-        print("Timer Has Ended.")
+        # print("Timer Has Ended.")
         self._reset_stats(self.statistics)
         self._time_loop()
 
@@ -182,7 +173,6 @@ class Py3status:
         thread_time.start()
         thread_ping.join()
         thread_time.join()
-
 
 # Packet_loss()._make_threads()
 
