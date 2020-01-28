@@ -23,10 +23,10 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
-    format = "transmitted: {transmitted} received: {received} unreachable: {unreachable} "
+    # format = "transmitted: {transmitted} received: {received} unreachable: {unreachable} [\?not_zero packet_loss: {packet_loss}% ]"
+    format = "PLoss [\?not_zero lost: {unreachable}] [\?not_zero {packet_loss}%]"
     # :TODO
     # format_loss = "{transmitted}{received}{unreachable}"
-    # format_separator = ", "
     # defaults: Google Public DNS: 8.8.8.8 or 8.8.4.4
     HOST = "8.8.8.8"
     INTERVAL = 4
@@ -41,23 +41,11 @@ class Py3status:
 
     def packet_loss(self):
         """One and only output method."""
-        # stat = {}
-        # for s in self.statistics.keys():
-            # stat[s] = s
-        stats = self.py3.time_in(self.cache_timeout)
         response = {
-            "full_text": self.py3.safe_format(self.format, stats),
+            "full_text": self.py3.safe_format(self.format, self.statistics),
             "cached_until": self.py3.time_in(self.cache_timeout),
         }
-        self._make_threads()
-
-        # self.py3.safe_format(self.format_loss, {})
-
-        # format_separator = self.py3.safe_format(self.format_separator)
-        # format_loss = self.py3.composite_join(format_separator, self.statistics)
-        # response["full_text"] = self.py3.safe_format(
-            # self.format, {"format_loss": format_loss}
-        # )
+        self._subping()
         return response
 
     def _calculate_packet_loss(self):
@@ -65,7 +53,7 @@ class Py3status:
         received = self.statistics.get("received", 0)
         transmitted = self.statistics.get("transmitted", 0)
         if received > 0 and transmitted > 0:
-            return round(100 - (received / transmitted * 100), 2)
+            return round(100 - (received / transmitted * 100), 1)
 
     def _update_statistics(self, key, get_packet_loss=GET_PACKET_LOSS):
         """Update ping statistics."""
@@ -141,40 +129,40 @@ class Py3status:
             # suppress the original error, with "from None"
             raise RuntimeError("Something wrong here!") from None
 
-    def _ping_loop(self):
-        """Infinite _ping_loop."""
-        while True:
-            # print(self._subping())
-            self._subping()
+    # def _ping_loop(self):
+        # """Infinite _ping_loop."""
+        # a = 0
+        # while a < 20:
+            # # print(self._subping())
+            # self._subping()
+            # a += 1
 
-    def _time_loop(self, time_slice=TIME_SLICE):
-        """Infinite _time_loop. Recursive function.
+    # def _time_loop(self, time_slice=TIME_SLICE):
+        # """Infinite _time_loop. Recursive function.
 
-        Optional parameter:
-            time_slice (int, last 't' minutes statistics storage)
-        """
-        self._count_iteration(self.time_iteration, "_time_loop()")
-        time_slice *= 60
-        while time_slice:
-            mins, secs = divmod(time_slice, 60)
-            timeformat = "{:02d}:{:02d}".format(mins, secs)
-            # print(timeformat, end="\r")
-            sleep(1)
-            time_slice -= 1
-        # print("Timer Has Ended.")
-        self._reset_stats(self.statistics)
-        self._time_loop()
+        # Optional parameter:
+            # time_slice (int, last 't' minutes statistics storage)
+        # """
+        # self._count_iteration(self.time_iteration, "_time_loop()")
+        # time_slice *= 60
+        # while time_slice:
+            # mins, secs = divmod(time_slice, 60)
+            # timeformat = "{:02d}:{:02d}".format(mins, secs)
+            # # print(timeformat, end="\r")
+            # sleep(1)
+            # time_slice -= 1
+        # # print("Timer Has Ended.")
+        # self._reset_stats(self.statistics)
+        # self._time_loop()
 
-    def _make_threads(self):
-        """Create and start two main threads."""
-        thread_ping = Thread(target=self._ping_loop, daemon=True)
-        thread_time = Thread(target=self._time_loop, daemon=True)
-        thread_ping.start()
-        thread_time.start()
-        thread_ping.join()
-        thread_time.join()
-
-# Packet_loss()._make_threads()
+    # def _make_threads(self):
+        # """Create and start two main threads."""
+        # thread_ping = Thread(target=self._ping_loop, daemon=True)
+        # thread_time = Thread(target=self._time_loop, daemon=True)
+        # thread_ping.start()
+        # thread_time.start()
+        # thread_ping.join()
+        # thread_time.join()
 
 
 if __name__ == "__main__":
