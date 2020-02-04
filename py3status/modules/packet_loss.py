@@ -20,16 +20,14 @@ class Py3status:
     """
 
     # available configuration parameters
-    # defaults: Google Public DNS: 8.8.8.8 or 8.8.4.4
     cache_timeout = 1
     format = "PL:{unreachable} {packet_loss}%"
+    time_slice = 5
     get_packet_loss = True
     hide_if_zero = True
-    host = "8.8.8.8"
+    host = "8.8.8.8" # default: Google Public DNS: 8.8.8.8 or 8.8.4.4
     interval = 4
     packetsize = 8
-    time_slice = 0.5
-    # format = "transmitted: {transmitted} received: {received} unreachable: {unreachable} packet_loss: {packet_loss}%"
 
     def post_config_hook(self):
         self.statistics = {"transmitted": 0, "received": 0, "unreachable": 0}
@@ -46,7 +44,6 @@ class Py3status:
         response = {"cached_until": self.py3.time_in(self.cache_timeout)}
         if self.hide_if_zero and self.statistics.get("unreachable", 0) == 0:
             response["full_text"] = ""
-        # elif self.statistics.get("unreachable", 0) > 0:
         else:
             response["full_text"] = self.py3.safe_format(self.format, self.statistics)
         return response
