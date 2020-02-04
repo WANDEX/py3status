@@ -55,7 +55,7 @@ class Py3status:
         """Calculate packet_loss %."""
         received = self.statistics.get("received", 0)
         transmitted = self.statistics.get("transmitted", 0)
-        return round(100 - (received / transmitted * 100), 1)
+        return format(100 - (received / transmitted * 100), ".2f")
 
     def _update_statistics(self, key, get_packet_loss=get_packet_loss):
         """Update ping statistics."""
