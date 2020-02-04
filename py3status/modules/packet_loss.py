@@ -48,6 +48,14 @@ class Py3status:
             response["full_text"] = self.py3.safe_format(self.format, self.statistics)
         return response
 
+    def on_click(self, event):
+        """Clear statistics."""
+        button = event['button']
+        format_string = 'CLEAR {button}'
+        data = {'button': button}
+        self.full_text = self.py3.safe_format(format_string, data)
+        self._reset_stats(self.statistics)
+
     def _calculate_packet_loss(self):
         """Calculate packet_loss %."""
         received = self.statistics.get("received", 0)
