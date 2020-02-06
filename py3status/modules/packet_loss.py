@@ -21,18 +21,25 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
-    format = "PL:{unreachable} {packet_loss}%"
+    format = "[\?color=packet_loss {unreachable} {packet_loss}]%"
     time_slice = 5
     get_packet_loss = True
     hide_if_zero = True
     host = "8.8.8.8" # default: Google Public DNS: 8.8.8.8 or 8.8.4.4
     interval = 4
     packetsize = 8
+    thresholds = [
+        (0, "good"),
+        (10, "degraded"),
+        (20, "#ffa500"),
+        (30, "bad"),
+    ]
 
     def post_config_hook(self):
         self.statistics = {"transmitted": 0, "received": 0, "unreachable": 0}
         self.minutes = self.time_slice * 60
         self.end_time = time() + self.minutes
+        self.thresholds_init = self.py3.get_color_names_list(self.format)
 
     def packet_loss(self):
         """One and only output method."""
@@ -41,6 +48,11 @@ class Py3status:
         if current_time > self.end_time:
             self._reset_stats(self.statistics)
             self.end_time = time() + self.minutes
+
+        for x in self.thresholds_init:
+            if x in self.statistics:
+                self.py3.threshold_get_color(self.statistics[x], x)
+
         response = {"cached_until": self.py3.time_in(self.cache_timeout)}
         if self.hide_if_zero and self.statistics.get("unreachable", 0) == 0:
             response["full_text"] = ""
