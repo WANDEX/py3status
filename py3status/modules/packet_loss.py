@@ -21,6 +21,8 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
+    format_prefix = "PL:"
+    format_postfix = " "
     format = "[\?color=packet_loss {unreachable} {packet_loss}]%"
     time_slice = 5
     get_packet_loss = True
@@ -40,6 +42,7 @@ class Py3status:
         self.minutes = self.time_slice * 60
         self.end_time = time() + self.minutes
         self.thresholds_init = self.py3.get_color_names_list(self.format)
+        self.format = self.format_prefix + self.format + self.format_postfix
 
     def packet_loss(self):
         """One and only output method."""
