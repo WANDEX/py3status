@@ -21,12 +21,12 @@ class Py3status:
 
     # available configuration parameters
     cache_timeout = 1
-    format_prefix = "PL:"
+    format_prefix = "PL: "
     format_postfix = " "
     format = "[\?color=packet_loss {unreachable} {packet_loss}]%"
-    time_slice = 5
+    time_slice = 60
     get_packet_loss = True
-    hide_if_zero = True
+    hide_if_zero = False
     host = "8.8.8.8" # default: Google Public DNS: 8.8.8.8 or 8.8.4.4
     interval = 4
     packetsize = 8
