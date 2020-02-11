@@ -1,15 +1,91 @@
 # -*- coding: utf-8 -*-
 """
-Keep track of packet loss over a period of time.
+Track packet loss and host/ip availability over a period of time.
 
-Counts lost packets during last one-, five-, and fifteen-minute periods.
+Counts and notifies about lost packets for a certain period of time.
 
-Requires:
+Configuration parameters:
+    cache_timeout: refresh interval for this module in seconds (default 5)
+    format_prefix: Text preceding the 'format'. (default 'PL: ')
+    format_postfix: Text following after 'format'. (default ' ')
+    format: Display format for this module
+        *(default 'PL: [\?color=packet_loss {unreachable} {packet_loss}]% ')*
+    time_slice: The period of time in minutes for which you need to collect
+        statistics. (default 60)
+    get_packet_loss: If False -> {packet_loss} placeholder won't be calculated
+        every 'interval' seconds. (default True)
+    hide_if_zero: Hide module if the {unreachable} variable, which is the number of lost
+        packets, is 0. (default False)
+    host: Address of host/ip to ping. By default, Google Public DNS is used.
+        (default '8.8.8.8')
+    interval: Wait interval seconds between sending each packet. (default 4)
+    packetsize: Number of data bytes to be sent + 8 bytes of ICMP header data.
+        (default 8)
+    thresholds: specify color thresholds to use
+        *(default [(0, 'good'), (10, 'degraded'),
+        (20, '#ffa500'), (30, 'bad')])*
+
+Color thresholds:
+    xxx: print a color based on the value of `xxx` placeholder
 
 Notes:
     https://stackoverflow.com/questions/2953462/pinging-servers-in-python
-"""
 
+Examples:
+```
+# default format with color thresholds based on the packet_loss placeholder
+packet_loss {
+    format = "[\?color=packet_loss {unreachable} {packet_loss}]%"
+}
+
+# show statistics in the default format, but without color thresholds
+packet_loss {
+    format = "{unreachable} {packet_loss}%"
+}
+
+# show detailed statistics with all available placeholders
+packet_loss {
+    format = '[\?color=packet_loss '
+    format += 'transmitted: {transmitted} '
+    format += 'received: {received} '
+    format += 'unreachable: {unreachable} '
+    format += 'packet_loss: {packet_loss}]%'
+}
+
+# get statistics for 24 hours
+packet_loss {
+    cache_timeout = 1
+    format_prefix = " 24H: "
+    format_postfix = ""
+    time_slice = 1440
+    get_packet_loss = True
+    hide_if_zero = False
+    host = "8.8.8.8"
+    interval = 4
+    packetsize = 8
+}
+
+```
+
+@author WANDEX
+
+SAMPLE OUTPUT
+[
+    {'full_text': 'PL: '},
+    {'full_text': '1 33.33', 'color': '#FF0000'},
+    {'full_text': '% '}
+]
+
+detailed
+[
+    {'full_text': 'PL: '},
+    {'full_text': 'transmitted: 6'},
+    {'full_text': 'received:' 4},
+    {'full_text': 'unreachable: 2'},
+    {'full_text': 'packet_loss: 33.33', 'color': '#FF0000'},
+    {'full_text': '% '}
+]
+"""
 
 from time import time, sleep
 from subprocess import Popen, DEVNULL, CalledProcessError
