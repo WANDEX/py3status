@@ -20,7 +20,7 @@ class Py3status:
     """
 
     # available configuration parameters
-    cache_timeout = 1
+    cache_timeout = 5
     format_prefix = "PL: "
     format_postfix = " "
     format = "[\?color=packet_loss {unreachable} {packet_loss}]%"
